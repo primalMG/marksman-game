@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Marksman fm</title>
+</head>
+<body>
+    <div id="signIn">
+        Username: <input id="username" type="text"></input>
+        Password: <input id="password" type="password"></input>
+        <button id="login">login</button>
+        <button id="signUp">sign up</button>
+    </div>
+
+    <div id="radio" >
+            <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+    <div id="txtChat" style="width: 500px;height:100px;overflow-y:scroll">
+            <button id="joinQueue">join</button></div>
+        <form id="chatForm">
+            <input id="chatInput" type="text" style="width: 500px"></input>
+        </form>
+    </div>
+
+
+   
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+    <script>
+        var socket = io();
+        //login
+        var signIn = document.getElementById('signIn');
+        var username = document.getElementById('username');
+        var password = document.getElementById('password');
+        var login = document.getElementById('login');
+        var signUp = document.getElementById('signUp');
+        var radio = document.getElementById('radio');
+
+        login.onclick = function(){
+            socket.emit('join',{nickname:username.value,pass:password.value});
+        }
+
+        signUp.onclick = function(){
+            socket.emit('create',{nickname:username.value,pass:password.value});
+        }
+        
+        socket.on('loginResponse',function(data){
+		    if(data.success){
+                signIn.style.display = 'none';
+                radio.style.display = 'inline-block';
+            } else 
+                alert("unsuccessful.");
+        });
+        
+        socket.on('signUpResponse',function(data){
+		    if(data.success){
+                alert("Sign up successful.");
+            } else 
+                alert("unsuccessful.");
+	    });
+        
+
+        //radio chat room
+        var txtChat = document.getElementById('txtChat');
+        var chatForm = document.getElementById('chatForm');
+        var chatInput = document.getElementById('chatInput');
+        
+        socket.on('newMessage', function(data){
+            txtChat.innerHTML += '<div>' + data + '</div>';
+        });
+
+        socket.on('evalAnswer', function(data){
+            console.log(data);
+        });        
+
+        chatForm.onsubmit = function(e){
+            e.preventDefault();
+            if(chatInput.value[0] === '/')
+                socket.emit('evalServer',chatInput.values.slice(1));
+            else    
+                socket.emit('pushMessage', chatInput.value);
+                chatInput.value = '';
+        }
+
+       var ctx = document.getElementById('ctx').getContext('2d');
+       ctx.font = '30px Arial';
+
+
+       //Planting the letting M on the canvas in the set location
+       socket.on('newPositions',function(data){
+            ctx.clearRect(0,0,500,500);
+            for(var i = 0 ; i < data.length; i++)
+            ctx.fillText(data[i].number,data[i].x,data[i].y);   
+       });
+
+       document.onkeydown = function(event){
+            if(event.keyCode === 83) //w key
+                socket.emit('keyPress', {inputId:'up', state: true});
+            else if(event.keyCode === 65) //a key
+                socket.emit('keyPress', {inputId:'left', state: true});
+            else if(event.keyCode === 87) //s key
+                socket.emit('keyPress', {inputId:'down', state: true});
+            else if(event.keyCode === 68) //d key
+                socket.emit('keyPress', {inputId:'right', state: true});                    
+       }
+       
+       document.onkeyup = function(event){
+            if(event.keyCode === 83) //w key
+                socket.emit('keyPress', {inputId:'up', state:false});
+            else if(event.keyCode === 65) //a key
+                socket.emit('keyPress', {inputId:'left', state:false});
+            else if(event.keyCode === 87) //s key
+                socket.emit('keyPress', {inputId:'down', state:false});
+            else if(event.keyCode === 68) //d key
+                socket.emit('keyPress', {inputId:'right', state:false});                    
+       }    
+
+    </script>
+</body>
+</html>
