@@ -13,34 +13,139 @@ http.listen(3000,function(){
 });
 
 var socketList = {};
-var playerList ={};
 
-var Player = function(id){
+//Super class for the player and bullets -- updating positions
+var Entity = function(){
     var self = {
         x:250,
         y:250,
-        id:id,
-        number:"" + Math.floor(10 * Math.random()),
-        right:false,
-        left:false,
-        down:false,
-        up:false,
-        maxSpeed:10,
+        spdX: 0,
+        spdY: 0,
+        id: "",
+    }
+    self.update = function(){
+        self.updatePosition();
     }
     self.updatePosition = function(){
-        if(self.right)
-            self.x += self.maxSpeed;
-            if(self.left)
-            self.x -= self.maxSpeed;
-            if(self.down)
-            self.y -= self.maxSpeed;
-            if(self.up)
-            self.y += self.maxSpeed;    
+        self.x += self.spdX;
+        self.y += self.spdY;
     }
     return self;
 }
 
-//getting the usernames of the listners
+var Player = function(id){
+    var self = Entity();{
+    self.id = id;    
+        self.number = "" + Math.floor(10 * Math.random());
+        self.right = false;
+        self.left = false;
+        self.down = false;
+        self.up = false;
+        self.maxSpeed = 10;
+    }
+
+    var superUpdate = self.update;
+    self.update = function(){
+        self.updateSpeed();
+        superUpdate();
+    }
+    
+    self.updateSpeed = function(){
+        if(self.right)
+            self.spdX = self.maxSpeed;
+        else if(self.left)
+            self.spdX = -self.maxSpeed;
+        else
+            self.spdX = 0;
+                
+        if(self.up)
+            self.spdY = self.maxSpeed;
+        else if(self.down)
+            self.spdY = -self.maxSpeed;
+        else
+            self.spdY = 0;        
+    }
+    Player.list[id] = self;
+    return self;
+}
+
+
+Player.list = {};
+
+Player.onConnect = function(socket){
+    var player = Player(socket.id);
+    socket.on('keyPress', function(data){
+        if(data.inputId === 'left')
+            player.left = data.state;
+        else if(data.inputId === 'right')
+            player.right = data.state;
+        else if(data.inputId === 'up')
+            player.up = data.state;
+        else if(data.inputId === 'down')
+            player.down = data.state;         
+    });
+}
+
+Player.onDisconnect = function(socket){
+    delete Player.list[socket.id];
+
+}
+
+Player.update = function(){
+    var pack = [];
+        for (var i in Player.list){
+            var player = Player.list[i];
+            player.update();
+            pack.push({
+                x:player.x,
+                y:player.y,
+                number:player.number
+            });
+    }
+    return pack;
+}
+
+//Projectiles
+var Bullet = function(angle){
+    var self = Entity();
+    self.id = Math.random();
+    self.spdX = Math.cos(angle/180*Math.PI) * 10;
+    self.spdY = Math.sin(angle/180*Math.PI) * 10;
+
+    self.timer = 0;
+    self.toRemove = false;
+    var superUpdate = self.update;
+    self.update = function(){
+        if(self.timer++ > 100)
+            self.toRemove = true;
+        superUpdate();
+    }
+    Bullet.list[self.id] = self;
+    return self;
+}
+Bullet.list = {};
+
+Bullet.update = function(){
+    if (Math.random() < 0.1) {
+        Bullet(Math.random()*360);
+    }
+
+    var pack = [];
+        for (var i in Bullet.list){
+            var bullet = Bullet.list[i];
+            bullet.update();
+            pack.push({
+                x:bullet.x,
+                y:bullet.y,
+                number:bullet.number
+            });
+    }
+    return pack;
+}
+
+
+
+//getting the usernames of the players.
 var userList = {
     "marcus":"pass",
 }
@@ -81,27 +186,17 @@ io.on('connection', function(socket){
             socket.emit('signUpResponse',{success:true});
         }
     });
- 
-    var player = Player(socket.id);
-    playerList[socket.id] = player;
+    
+    //creating a new player.
+    Player.onConnect(socket);
 
     //disconnecting a player
     socket.on('disconnect', function(){
         delete socketList[socket.id];
-        delete playerList[socket.id];
-
+        Player.onDisconnect(socket);
     });
 
-    socket.on('keyPress', function(data){
-        if(data.inputId === 'left')
-            player.left = data.state;
-        else if(data.inputId === 'right')
-            player.right = data.state;
-        else if(data.inputId === 'up')
-            player.up = data.state;
-        else if(data.inputId === 'down')
-            player.down = data.state;         
-    });
+
 
     //sending a users message to the server.
     socket.on('pushMessage', function(data){
@@ -119,16 +214,11 @@ io.on('connection', function(socket){
 
 
 setInterval(function(){
-    var pack = [];
-    for(var i in playerList){
-        var player = playerList[i];
-        player.updatePosition();
-        pack.push({
-            x:player.x,
-            y:player.y,
-            number:player.number 
-        });
-    }
+   var pack = {
+       player:Player.update(),
+       bullet:Bullet.update(),
+   }
+
     for(var i in socketList){
         var socket = socketList[i];
         socket.emit('newPositions',pack)
