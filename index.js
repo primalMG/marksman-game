@@ -14,6 +14,8 @@ http.listen(3000,function(){
 
 var socketList = {};
 
+var enemies = {};
+
 //Super class for the player and bullets -- updating positions
 var Entity = function(){
     var self = {
@@ -30,6 +32,9 @@ var Entity = function(){
         self.x += self.spdX;
         self.y += self.spdY;
     }
+    self.getDistance = function(pt){
+        return Math.sqrt(Math.pow(self.x-pt.x,2) + Math.pow(self.y-pt.y,2));
+    }
     return self;
 }
 
@@ -41,6 +46,7 @@ var Player = function(id){
         self.left = false;
         self.down = false;
         self.up = false;
+        self.attacking = false;
         self.maxSpeed = 10;
     }
 
@@ -48,6 +54,19 @@ var Player = function(id){
     self.update = function(){
         self.updateSpeed();
         superUpdate();
+
+        if (self.attacking) {
+           self.shootRockets(Math.random()*0);
+        }
+
+
+    }
+
+    //shooting the projectiles 
+    self.shootRockets = function(angle){
+        var rockets = Bullet(angle);
+            rockets.x = self.x;
+            rockets.y = self.y;
     }
     
     self.updateSpeed = function(){
@@ -82,7 +101,9 @@ Player.onConnect = function(socket){
         else if(data.inputId === 'up')
             player.up = data.state;
         else if(data.inputId === 'down')
-            player.down = data.state;         
+            player.down = data.state;
+        else if(data.inputId === 'space')
+            player.attacking = data.state;             
     });
 }
 
@@ -119,6 +140,16 @@ var Bullet = function(angle){
         if(self.timer++ > 100)
             self.toRemove = true;
         superUpdate();
+
+        /* bullet collision
+        for(var i in Player.list){
+            var e =  enemies.list[i];
+            if(self.getDistance (e) < 32 && self.parent !== e.id){
+                //score ++
+                self.toRemove = true;
+            }
+        }*/
+
     }
     Bullet.list[self.id] = self;
     return self;
@@ -126,9 +157,6 @@ var Bullet = function(angle){
 Bullet.list = {};
 
 Bullet.update = function(){
-    if (Math.random() < 0.1) {
-        Bullet(Math.random()*360);
-    }
 
     var pack = [];
         for (var i in Bullet.list){
@@ -223,6 +251,8 @@ setInterval(function(){
         var socket = socketList[i];
         socket.emit('newPositions',pack)
     } 
+
+
    
 },1000/25);
 

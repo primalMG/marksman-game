@@ -98,27 +98,32 @@
        });
 
        document.onkeydown = function(event){
-            if(event.keyCode === 83) //w key
+            if(event.keyCode === 40) //up key
                 socket.emit('keyPress', {inputId:'up', state: true});
-            else if(event.keyCode === 65) //a key
+            else if(event.keyCode === 37) //left key
                 socket.emit('keyPress', {inputId:'left', state: true});
-            else if(event.keyCode === 87) //s key
+            else if(event.keyCode === 38) //down key
                 socket.emit('keyPress', {inputId:'down', state: true});
-            else if(event.keyCode === 68) //d key
-                socket.emit('keyPress', {inputId:'right', state: true});                    
+            else if(event.keyCode === 39) //right key
+                socket.emit('keyPress', {inputId:'right', state: true});
+            else if(event.keyCode === 32)//space    
+                socket.emit('keyPress', {inputId:'space', state:true});                                  
        }
        
        document.onkeyup = function(event){
-            if(event.keyCode === 83) //w key
+            if(event.keyCode === 40) //w key
                 socket.emit('keyPress', {inputId:'up', state:false});
-            else if(event.keyCode === 65) //a key
+            else if(event.keyCode === 37) //a key
                 socket.emit('keyPress', {inputId:'left', state:false});
-            else if(event.keyCode === 87) //s key
+            else if(event.keyCode === 38) //s key
                 socket.emit('keyPress', {inputId:'down', state:false});
-            else if(event.keyCode === 68) //d key
-                socket.emit('keyPress', {inputId:'right', state:false});                    
-       }    
-
+            else if(event.keyCode === 39) //d key
+                socket.emit('keyPress', {inputId:'right', state:false});
+            else if(event.keyCode === 32)//space    
+                socket.emit('keyPress', {inputId:'space', state:false});                        
+       }
+       
+   
     </script>
 </body>
 </html>
