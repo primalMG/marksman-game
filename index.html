@@ -17,7 +17,6 @@
     <div id="radio" >
             <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
     <div id="txtChat" style="width: 500px;height:100px;overflow-y:scroll">
-            <button id="joinQueue">join</button></div>
         <form id="chatForm">
             <input id="chatInput" type="text" style="width: 500px"></input>
         </form>
@@ -65,6 +64,8 @@
         var txtChat = document.getElementById('txtChat');
         var chatForm = document.getElementById('chatForm');
         var chatInput = document.getElementById('chatInput');
+
+
         
         socket.on('newMessage', function(data){
             txtChat.innerHTML += '<div>' + data + '</div>';
@@ -83,8 +84,41 @@
                 chatInput.value = '';
         }
 
+
+       //game initialisation
        var ctx = document.getElementById('ctx').getContext('2d');
        ctx.font = '30px Arial';
+
+       var Player = function(initialisation){
+           var self = {};
+           self.id = initialisation.id;
+           self.number = initialisation.number;
+           self.x = initialisation.x;
+           self.y = initialisation.y;
+           Player.list[self.id] = self;
+           return self;
+       }
+       Player.list = {};
+
+       var Bullet = function(initialisation){
+           var self = {};
+           self.id = initialisation.id;
+           self.number = initialisation.number;
+           self.x = initialisation.x;
+           self.y = initialisation.y;
+           Bullet.list[self.id] = self;
+           return self;
+       }
+       Bullet.list = {};
+
+       socket.on('initialise', function(data){
+           for(var i = 0 ; i < data.player.length; i++) {
+               new Player(data.player[i]);
+           }
+           for(var i = 0 ; i < data.bullet.length; i++){
+               new Bullet(data.bullet[i]);
+           }
+       })
 
 
        //Planting the letting M on the canvas in the set location
