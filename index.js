@@ -58,8 +58,6 @@ var Player = function(id){
         if (self.attacking) {
            self.shootRockets(Math.random()*0);
         }
-
-
     }
 
     //shooting the projectiles 
@@ -85,6 +83,14 @@ var Player = function(id){
             self.spdY = 0;        
     }
     Player.list[id] = self;
+
+    initialisePack.player.push({
+        id:self.id,
+        x:self.x,
+        y:self.y,
+        number:self.number,
+    });
+
     return self;
 }
 
@@ -109,7 +115,7 @@ Player.onConnect = function(socket){
 
 Player.onDisconnect = function(socket){
     delete Player.list[socket.id];
-
+    removePack.player.push(socket.id);
 }
 
 Player.update = function(){
@@ -118,9 +124,9 @@ Player.update = function(){
             var player = Player.list[i];
             player.update();
             pack.push({
+                id:player.id,
                 x:player.x,
-                y:player.y,
-                number:player.number
+                y:player.y               
             });
     }
     return pack;
@@ -151,7 +157,13 @@ var Bullet = function(angle){
         }*/
 
     }
+
     Bullet.list[self.id] = self;
+    initialisePack.bullet.push({
+        id:self.id,
+        x:self.x,
+        y:self.y,
+    });
     return self;
 }
 Bullet.list = {};
@@ -162,10 +174,14 @@ Bullet.update = function(){
         for (var i in Bullet.list){
             var bullet = Bullet.list[i];
             bullet.update();
-            pack.push({
-                x:bullet.x,
-                y:bullet.y,
-                number:bullet.number
+            if(bullet.toRemove){
+                delete Bullet.list[i];
+                removePack.bullet.push(bullet.id);
+            } else 
+                pack.push({
+                    id:bullet.id,
+                    x:bullet.x,
+                    y:bullet.y,
             });
     }
     return pack;
@@ -240,6 +256,9 @@ io.on('connection', function(socket){
     });
 });
 
+var initialisePack = {player:[],bullet:[]};
+var removePack = {player:[],bullet:[]};
+
 
 setInterval(function(){
    var pack = {
@@ -249,9 +268,14 @@ setInterval(function(){
 
     for(var i in socketList){
         var socket = socketList[i];
-        socket.emit('newPositions',pack)
+        socket.emit('initialise',initialisePack);
+        socket.emit('update',pack);
+        socket.emit('remove',removePack);
     } 
-
+    initialisePack.player = [];
+    initialisePack.bullet = [];
+    removePack.player = [];
+    removePack.bullet = [];
 
    
 },1000/25);
