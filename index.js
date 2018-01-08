@@ -39,7 +39,7 @@ var Entity = function(){
 }
 
 var Player = function(id){
-    var self = Entity();{
+    var self = Entity();
     self.id = id;    
         self.number = "" + Math.floor(10 * Math.random());
         self.right = false;
@@ -48,7 +48,10 @@ var Player = function(id){
         self.up = false;
         self.attacking = false;
         self.maxSpeed = 10;
-    }
+        self.hp = 5;
+        self.hpMax = 5;
+        self.points = 0;
+    
 
     var superUpdate = self.update;
     self.update = function(){
@@ -82,14 +85,33 @@ var Player = function(id){
         else
             self.spdY = 0;        
     }
+
+    self.getInitialisePack = function(){
+        return {
+            id:self.id,
+            x:self.x,
+            y:self.y,
+            number:self.number,
+            hp:self.hp,
+            maxHp:self.hpMax,
+            score:self.score,
+        };
+    }
+
+    self.getUpdatePack = function(){
+        return {
+            id:self.id,
+            x:self.x,
+            y:self.y,
+            hp:self.hp,
+            score:self.score,
+        };
+    }
+
+
     Player.list[id] = self;
 
-    initialisePack.player.push({
-        id:self.id,
-        x:self.x,
-        y:self.y,
-        number:self.number,
-    });
+    initialisePack.player.push(self.getInitialisePack());
 
     return self;
 }
@@ -111,6 +133,19 @@ Player.onConnect = function(socket){
         else if(data.inputId === 'space')
             player.attacking = data.state;             
     });
+
+    var players = [];
+    for (var i in Player.list)
+        players.push(Player.list[i].getInitialisePack());  
+        
+    var bullets = [];
+    for (var i in Bullet.list)
+        bullets.push(Bullet.list[i].getInitialisePack());    
+
+    socket.emit('initialise',{
+        player:players,
+        bullet:bullets,
+    })
 }
 
 Player.onDisconnect = function(socket){
@@ -123,11 +158,7 @@ Player.update = function(){
         for (var i in Player.list){
             var player = Player.list[i];
             player.update();
-            pack.push({
-                id:player.id,
-                x:player.x,
-                y:player.y               
-            });
+            pack.push(player.getUpdatePack());
     }
     return pack;
 }
@@ -137,7 +168,7 @@ var Bullet = function(angle){
     var self = Entity();
     self.id = Math.random();
     self.spdX = Math.cos(angle/180*Math.PI) * 10;
-    self.spdY = Math.sin(angle/180*Math.PI) * 10;
+    self.spdY = Math.sin(angle/180*Math.PI) * 1;
 
     self.timer = 0;
     self.toRemove = false;
@@ -158,12 +189,25 @@ var Bullet = function(angle){
 
     }
 
+    self.getInitialisePack = function(){
+        return {
+            id:self.id,
+            x:self.x,
+            y:self.y,
+        };
+    }
+
+    self.getUpdatePack = function(){
+        return {
+            id:self.id,
+            x:self.x,
+            y:self.y,
+        };
+    }
+
+
     Bullet.list[self.id] = self;
-    initialisePack.bullet.push({
-        id:self.id,
-        x:self.x,
-        y:self.y,
-    });
+    initialisePack.bullet.push(self.getInitialisePack());
     return self;
 }
 Bullet.list = {};
@@ -178,11 +222,7 @@ Bullet.update = function(){
                 delete Bullet.list[i];
                 removePack.bullet.push(bullet.id);
             } else 
-                pack.push({
-                    id:bullet.id,
-                    x:bullet.x,
-                    y:bullet.y,
-            });
+                pack.push(bullet.getUpdatePack());
     }
     return pack;
 }

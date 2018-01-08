@@ -16,8 +16,8 @@
 
     <div id="radio" >
             <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
-    <div id="txtChat" style="width: 500px;height:100px;overflow-y:scroll">
         <form id="chatForm">
+            <div id="txtChat" style="width: 500px;height:100px;overflow-y:scroll">
             <input id="chatInput" type="text" style="width: 500px"></input>
         </form>
     </div>
@@ -93,6 +93,9 @@
            var self = {};
            self.id = initialisation.id;
            self.number = initialisation.number;
+           self.hp = initialisation.hp;
+           self.maxHp = initialisation.maxHp;
+           self.score = initialisation.score;
            self.x = initialisation.x;
            self.y = initialisation.y;
            Player.list[self.id] = self;
@@ -132,6 +135,10 @@
                     p.x = pack.x;
                 if(pack.y !== undefined)
                     p.y = pack.y;
+                if(pack.hp !== undefined)
+                    p.hp = pack.hp;
+                if(pack.score !== undefined)
+                    p.score = pack.score;
                 }
             }
             for(var i = 0 ; i < data.bullet.length; i++){
