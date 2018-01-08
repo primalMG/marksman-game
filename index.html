@@ -14,10 +14,16 @@
         <button id="signUp">sign up</button>
     </div>
 
+   
+
+    
+
     <div id="radio" >
             <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+
+        <div id="txtChat" style="width: 500px;height:100px;overflow-y:scroll"></div>
+
         <form id="chatForm">
-            <div id="txtChat" style="width: 500px;height:100px;overflow-y:scroll">
             <input id="chatInput" type="text" style="width: 500px"></input>
         </form>
     </div>
@@ -28,6 +34,8 @@
 
     <script>
         var socket = io();
+        var width = 500;
+        var height = 500;
         //login
         var signIn = document.getElementById('signIn');
         var username = document.getElementById('username');
@@ -89,17 +97,31 @@
        var ctx = document.getElementById('ctx').getContext('2d');
        ctx.font = '30px Arial';
 
-       var Player = function(initialisation){
-           var self = {};
-           self.id = initialisation.id;
-           self.number = initialisation.number;
-           self.hp = initialisation.hp;
-           self.maxHp = initialisation.maxHp;
-           self.score = initialisation.score;
-           self.x = initialisation.x;
-           self.y = initialisation.y;
-           Player.list[self.id] = self;
-           return self;
+
+
+        var Player = function(initialisation){
+            var self = {};
+            self.id = initialisation.id;
+            self.number = initialisation.number;
+            self.hp = initialisation.hp;
+            self.maxHp = initialisation.maxHp;
+            self.score = initialisation.score;
+            self.x = initialisation.x;
+            self.y = initialisation.y;
+            
+
+            self.draw = function(){
+                var hpBar = 30 * self.hp / self.maxHp;
+                ctx.fillRect(self.x - hpBar/2,self.y - 40,hpBar,4);
+                ctx.fillText(self.number,self.x,self.y);
+
+                var x = self.x - Player.list[selfID].x + width/2;
+                var y = self.y - Player.list[selfID].y + height/2;
+
+            }
+
+            Player.list[self.id] = self;
+            return self;
        }
        Player.list = {};
 
@@ -109,13 +131,32 @@
            self.number = initialisation.number;
            self.x = initialisation.x;
            self.y = initialisation.y;
+
+            self.draw = function(){
+                var x = self.x - Player.list[selfID].x + width/2;
+                var y = self.y - Player.list[selfID].y + height/2;
+
+                ctx.fillRect(self.x-5,self.y-5,10,10);
+
+            }
+
            Bullet.list[self.id] = self;
            return self;
        }
        Bullet.list = {};
 
+       var selfID = null;
+
+       var Enemy = function(initialisation){
+           var self = {
+               
+           }
+       }
+
        //iniitialising the player/bullets poistion on the client
        socket.on('initialise', function(data){
+           if(data.selfID)
+            selfID = data.selfID;
            for(var i = 0 ; i < data.player.length; i++) {
                new Player(data.player[i]);
            }
@@ -166,11 +207,16 @@
 
        //Planting the players location on the canvas in the set location of X
        setInterval(function(){
+
+            if(!selfID)
+                return;
             ctx.clearRect(0,0,500,500);
+            drawScore();
             for(var i in Player.list)
-                ctx.fillText(Player.list[i].number,Player.list[i].x,Player.list[i].y);
+                    Player.list[i].draw();
             for(var i in Bullet.list)
-                ctx.fillRect(Bullet.list[i].x-5,Bullet.list[i].y-5,10,10);           
+                    Bullet.list[i].draw();
+                             
        }, 40);
 
        document.onkeydown = function(event){
@@ -199,6 +245,11 @@
                 socket.emit('keyPress', {inputId:'space', state:false});                        
        }
        
+
+
+       var drawScore = function(){
+           ctx.fillText(Player.list[selfID].score,30,30);
+       }
    
     </script>
 </body>

@@ -16,6 +16,9 @@ var socketList = {};
 
 var enemies = {};
 
+var WIDTH = 475;
+var HEIGHT = 475;
+
 //Super class for the player and bullets -- updating positions
 var Entity = function(){
     var self = {
@@ -47,6 +50,8 @@ var Player = function(id){
         self.down = false;
         self.up = false;
         self.attacking = false;
+        self.width = 10;
+        self.height = 10;
         self.maxSpeed = 10;
         self.hp = 5;
         self.hpMax = 5;
@@ -83,8 +88,19 @@ var Player = function(id){
         else if(self.down)
             self.spdY = -self.maxSpeed;
         else
-            self.spdY = 0;        
+            self.spdY = 0; 
+             
+        if(self.x < self.width/2)
+            self.x = self.width/2;
+        if(self.x > WIDTH - self.width/2)
+            self.x = WIDTH - self.width/2;
+
+        if(self.y < self.height/2)
+            self.y = self.height/2;
+        if(self.y > HEIGHT - self.height/2)
+            self.y = HEIGHT - self.height/2;               
     }
+
 
     self.getInitialisePack = function(){
         return {
@@ -143,6 +159,7 @@ Player.onConnect = function(socket){
         bullets.push(Bullet.list[i].getInitialisePack());    
 
     socket.emit('initialise',{
+        selfID:socket.id,
         player:players,
         bullet:bullets,
     })
@@ -178,16 +195,19 @@ var Bullet = function(angle){
             self.toRemove = true;
         superUpdate();
 
-        /* bullet collision
+       /* bullet collision
         for(var i in Player.list){
             var e =  enemies.list[i];
             if(self.getDistance (e) < 32 && self.parent !== e.id){
-                //score ++
+                enemy.toRemove = true;
+
                 self.toRemove = true;
             }
         }*/
 
     }
+
+ 
 
     self.getInitialisePack = function(){
         return {
@@ -227,7 +247,24 @@ Bullet.update = function(){
     return pack;
 }
 
+/*
+var Enemy = function(){
+               
+        for(var i in Enemy.list){
+            var p =  Player.list[i];
+            if(self.getDistance (p) < 32 && self.parent !== p.id){
+                p.hp -= 1;
+                var shooter = Player.list[self.parent];
+                if(p.hp <= 0){
+                    p.hp = p.hpMax;
+                    p.y = Math.random * 500;
+                }
+                
 
+                self.toRemove = true;
+            }
+        }
+}*/
 
 //getting the usernames of the players.
 var userList = {
