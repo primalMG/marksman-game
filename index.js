@@ -19,6 +19,9 @@ var enemies = {};
 var WIDTH = 475;
 var HEIGHT = 475;
 
+
+
+
 //Super class for the player and bullets -- updating positions
 var Entity = function(){
     var self = {
@@ -192,7 +195,7 @@ var Bullet = function(angle){
     var superUpdate = self.update;
     self.update = function(){
         if(self.timer++ > 100)
-            self.toRemove = true;
+            self.toRemove = false;
         superUpdate();
 
        /* bullet collision
@@ -248,8 +251,15 @@ Bullet.update = function(){
 }
 
 /*
-var Enemy = function(){
-               
+var EnemySuper = function(id){
+        var self = {
+        width = ;
+        height = 10;
+        maxSpeed = 15;
+        }
+
+
+        /* collision
         for(var i in Enemy.list){
             var p =  Player.list[i];
             if(self.getDistance (p) < 32 && self.parent !== p.id){
@@ -263,10 +273,13 @@ var Enemy = function(){
 
                 self.toRemove = true;
             }
-        }
+        }*
 }*/
+//Enemy.list = {};
 
 //getting the usernames of the players.
+
+
 var userList = {
     "marcus":"pass",
 }

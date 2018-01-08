@@ -125,12 +125,12 @@
        }
        Player.list = {};
 
-       var Bullet = function(initialisation){
-           var self = {};
-           self.id = initialisation.id;
-           self.number = initialisation.number;
-           self.x = initialisation.x;
-           self.y = initialisation.y;
+        var Bullet = function(initialisation){
+            var self = {};
+            self.id = initialisation.id;
+            self.number = initialisation.number;
+            self.x = initialisation.x;
+            self.y = initialisation.y;
 
             self.draw = function(){
                 var x = self.x - Player.list[selfID].x + width/2;
@@ -140,18 +140,13 @@
 
             }
 
-           Bullet.list[self.id] = self;
-           return self;
-       }
-       Bullet.list = {};
+            Bullet.list[self.id] = self;
+            return self;
+        }    
+        Bullet.list = {};
 
-       var selfID = null;
+        var selfID = null;
 
-       var Enemy = function(initialisation){
-           var self = {
-               
-           }
-       }
 
        //iniitialising the player/bullets poistion on the client
        socket.on('initialise', function(data){
@@ -250,6 +245,38 @@
        var drawScore = function(){
            ctx.fillText(Player.list[selfID].score,30,30);
        }
+
+
+       var Enemy = function(initialisation) {
+           var enemySelf = {}; 
+           enemySelf.x = initialisation.x;
+           enemySelf.y = initialisation.y;
+           enemySelf.spdX = initialisation.spdX;
+           enemySelf.spdY = initialisation.spdY;
+           enemySelf.id = initialisation.id;
+
+           enemySelf.draw = function(){
+                ctx.fillText(enemySelf.id,enemySelf.x,enemySelf.y);
+
+                if(enemySelf.y < 0 || enemySelf.y > HEIGHT){
+                console.log(message);
+                enemySelf.spdY = -enemySelf.spdY;
+        }
+           }
+           
+    
+    } 
+
+setInterval(update,40);
+ 
+ 
+ 
+function update(){
+        updateEntity(enemy);
+       
+}
+
+
    
     </script>
 </body>
