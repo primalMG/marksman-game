@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Marksman fm</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+
+    <title>Marksmans game</title>
 </head>
 <body>
     <div id="signIn">
@@ -20,6 +22,7 @@
 
     <div id="radio" >
             <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+          
 
         <div id="txtChat" style="width: 500px;height:100px;overflow-y:scroll"></div>
 
@@ -29,7 +32,8 @@
     </div>
 
 
-   
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
     <script>
@@ -125,10 +129,10 @@
        }
        Player.list = {};
 
+
         var Bullet = function(initialisation){
             var self = {};
             self.id = initialisation.id;
-            self.number = initialisation.number;
             self.x = initialisation.x;
             self.y = initialisation.y;
 
@@ -145,26 +149,23 @@
         }    
         Bullet.list = {};
 
-        var Enemy = function(initialisation) {
-           var self = {}; 
+        var Enemy = function(initialisation){
+           var self = {};
+           self.id = initialisation.id; 
            self.x = initialisation.x;
            self.y = initialisation.y;
+           self.width = initialisation.width;
+           self.height = initialisation.height;
            self.spdX = initialisation.spdX;
            self.spdY = initialisation.spdY;
-           self.id = initialisation.id;
+           
 
-           enemySelf.draw = function(){
-                ctx.fillText(enemySelf.id,enemySelf.x,enemySelf.y); 
+           self.draw = function(){
+                ctx.fillText(self.id,self.x,self.y,self.width,self.height); 
            }
 
            Enemy.list[self.id] = self;
            return self;
-
-           //getting the enemy to move across the screen.
-           /*if(enemySelf.y < 0 || enemySelf.y > HEIGHT){
-                console.log(message);
-                enemySelf.spdY = -enemySelf.spdY;
-            }*/
     
         } 
         Enemy.list = {};
@@ -182,7 +183,13 @@
            for(var i = 0 ; i < data.bullet.length; i++){
                new Bullet(data.bullet[i]);
            }
-           for(var i = 0 ; i < data.enemy.length; i++){
+         
+       });
+
+       socket.on('initialiseE', function(data){
+        if(data.selfID)
+            selfID = data.selfID;
+        for(var i = 0 ; i < data.enemy.length; i++){
                new Enemy(data.enemy[i]);
            }
        });
@@ -213,6 +220,16 @@
                         b.x = pack.x;
                     if(pack.y !== undefined)
                         b.y = pack.y;
+                }
+            }
+            for(var i = 0 ; i < data.enemy.length; i++){
+                var pack = data.enemy[i];
+                var e = Enemy.list[data.enemy[i].id];
+                if(e){
+                    if(pack.x !== undefined)
+                        e.x = pack.x;
+                    if(pack.y !== undefined)
+                        e.y = pack.y;        
                 }
             }
        });
@@ -278,8 +295,6 @@
        var drawScore = function(){
            ctx.fillText(Player.list[selfID].score,30,30);
        }
-
-
         
  
 

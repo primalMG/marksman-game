@@ -23,7 +23,7 @@ var HEIGHT = 475;
 
 
 //Super class for the player and bullets -- updating positions
-var Entity = function(){
+var Entity = function(param){
     var self = {
         x:250,
         y:250,
@@ -47,6 +47,7 @@ var Entity = function(){
 var Player = function(id){
     var self = Entity();
     self.id = id;    
+    self.username = "";
         self.number = "" + Math.floor(10 * Math.random());
         self.right = false;
         self.left = false;
@@ -58,7 +59,7 @@ var Player = function(id){
         self.maxSpeed = 10;
         self.hp = 5;
         self.hpMax = 5;
-        self.points = 0;
+        self.score = 0;
     
 
     var superUpdate = self.update;
@@ -166,7 +167,6 @@ Player.onConnect = function(socket){
         selfID:socket.id,
         player:players,
         bullet:bullets,
-        enemy:enemies,
     })
 }
 
@@ -253,35 +253,56 @@ Bullet.update = function(){
 }
 
 
-var Enemy = function(){
+var Enemy = function(id){
         var self = Entity();
-        self.id = Math.random();    
+        self.id = "" + Math.floor(50 * Math.random());  
         self.width = 10 + Math.random()*30;
         self.height = 10 + Math.random()*30;
-        self.spdX = 5 + Math.random()*30;
-        self.spdY = 5 + Math.random()*30;
-        self.maxSpeed = 15;
-        self.x = 500;
-        self.y = Math.random()*HEIGHT;
+        self.spdX = 5 + Math.random()*10;
+        self.spdY = 5 + Math.random()*10;
+        self.maxSpeed = 10;
+      
         self.timer = 0;
 
 
         var superUpdate = self.update;
         self.update = function(){
             self.updateSpeed();
-            if(self.timer++ > 100)
-                self.toRemove = false;
             superUpdate();
         }
 
-        //getting the enemy to move across the screen.
+        self.updateSpeed = function(){
+        //getting the enemy to move across the screen.     
+
         if(self.y < 0 || self.y > HEIGHT){
-                console.log(message);
                 self.spdY = -self.spdY;
+            }
+        if(self.x < 0 || self.x > WIDTH){
+            self.spdX = -self.spdX;
+        }    
         }
 
+        self.getInitialisePack = function(){
+            return {
+                id:self.id,
+                width:self.width,
+                height:self.height,
+                x:self.x,
+                y:self.y,
+                spdX:self.spdX,
+                spdY:self.spdY,
+            };
+        }
 
-        /* collision
+        self.getUpdatePack = function(){
+            return {
+                id:self.id,
+                x:self.x,
+                y:self.y,
+            };
+        }
+
+        //collision
         for(var i in Enemy.list){
             var p =  Player.list[i];
             if(self.getDistance (p) < 32 && self.parent !== p.id){
@@ -295,19 +316,37 @@ var Enemy = function(){
 
                 self.toRemove = true;
             }
-        }*/
+        }//
+
+        Enemy.list[id] = self;
+
+        initialisePack.enemy.push(self.getInitialisePack());
+
+        return self;
 }
+
 Enemy.list = {};
 
 Enemy.Spawn = function(socket){
-    var enemy = [];
+    var enemy = Enemy(socket.id);
+    var enemies = [];
     for (var i in Enemy.list)
-        enemies.push(Enemy.list[i].getInitialisePack());   
+        enemies.push(Enemy.list[i].getInitialisePack()); 
 
+    socket.emit('initialiseE',{
+        selfID:socket.id,
+        enemy:enemies,
+    })
 }
 
 Enemy.update = function(){
     var pack = [];
+        for (var i in Enemy.list){
+            var enemy = Enemy.list[i];
+            enemy.update();
+            pack.push(enemy.getUpdatePack());
+        }
+        return pack;
 }
 
 //getting the usernames of the players.
@@ -355,6 +394,9 @@ io.on('connection', function(socket){
     //creating a new player.
     Player.onConnect(socket);
 
+    //spawning the emeies
+    Enemy.Spawn(socket);
+
     //disconnecting a player
     socket.on('disconnect', function(){
         delete socketList[socket.id];
@@ -391,6 +433,7 @@ setInterval(function(){
     for(var i in socketList){
         var socket = socketList[i];
         socket.emit('initialise',initialisePack);
+        socket.emit('initialiseE',initialisePack);
         socket.emit('update',pack);
         socket.emit('remove',removePack);
     } 
