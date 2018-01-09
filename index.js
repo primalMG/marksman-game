@@ -159,12 +159,14 @@ Player.onConnect = function(socket){
         
     var bullets = [];
     for (var i in Bullet.list)
-        bullets.push(Bullet.list[i].getInitialisePack());    
+        bullets.push(Bullet.list[i].getInitialisePack()); 
+      
 
     socket.emit('initialise',{
         selfID:socket.id,
         player:players,
         bullet:bullets,
+        enemy:enemies,
     })
 }
 
@@ -250,12 +252,32 @@ Bullet.update = function(){
     return pack;
 }
 
-/*
-var EnemySuper = function(id){
-        var self = {
-        width = ;
-        height = 10;
-        maxSpeed = 15;
+
+var Enemy = function(){
+        var self = Entity();
+        self.id = Math.random();    
+        self.width = 10 + Math.random()*30;
+        self.height = 10 + Math.random()*30;
+        self.spdX = 5 + Math.random()*30;
+        self.spdY = 5 + Math.random()*30;
+        self.maxSpeed = 15;
+        self.x = 500;
+        self.y = Math.random()*HEIGHT;
+        self.timer = 0;
+
+
+        var superUpdate = self.update;
+        self.update = function(){
+            self.updateSpeed();
+            if(self.timer++ > 100)
+                self.toRemove = false;
+            superUpdate();
+        }
+
+        //getting the enemy to move across the screen.
+        if(self.y < 0 || self.y > HEIGHT){
+                console.log(message);
+                self.spdY = -self.spdY;
         }
 
 
@@ -273,13 +295,22 @@ var EnemySuper = function(id){
 
                 self.toRemove = true;
             }
-        }*
-}*/
-//Enemy.list = {};
+        }*/
+}
+Enemy.list = {};
+
+Enemy.Spawn = function(socket){
+    var enemy = [];
+    for (var i in Enemy.list)
+        enemies.push(Enemy.list[i].getInitialisePack());   
+
+}
+
+Enemy.update = function(){
+    var pack = [];
+}
 
 //getting the usernames of the players.
-
-
 var userList = {
     "marcus":"pass",
 }
@@ -304,7 +335,7 @@ io.on('connection', function(socket){
     //allowing user to sign in
     socket.on('join',function(data){
         if(passwordValidation(data)){
-            Listener.onConnect(socket);
+            Player.onConnect(socket);
             socket.emit('loginResponse',{success:true});
         } else {
             socket.emit('loginResponse',{success:false});
@@ -346,14 +377,15 @@ io.on('connection', function(socket){
     });
 });
 
-var initialisePack = {player:[],bullet:[]};
-var removePack = {player:[],bullet:[]};
+var initialisePack = {player:[],bullet:[],enemy:[]};
+var removePack = {player:[],bullet:[],enemy:[]};
 
 
 setInterval(function(){
    var pack = {
        player:Player.update(),
        bullet:Bullet.update(),
+       enemy:Enemy.update(),
    }
 
     for(var i in socketList){
@@ -364,8 +396,10 @@ setInterval(function(){
     } 
     initialisePack.player = [];
     initialisePack.bullet = [];
+    initialisePack.enemy = [];
     removePack.player = [];
     removePack.bullet = [];
+    removePack.enemy = [];
 
    
 },1000/25);
