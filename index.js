@@ -200,7 +200,7 @@ var Bullet = function(angle){
             self.toRemove = false;
         superUpdate();
 
-       /* bullet collision
+    /*bullet collision
         for(var i in Player.list){
             var e =  enemies.list[i];
             if(self.getDistance (e) < 32 && self.parent !== e.id){
@@ -303,7 +303,7 @@ var Enemy = function(id){
         }
 
         //collision
-        for(var i in Enemy.list){
+        /*for(var i in Enemy.list){
             var p =  Player.list[i];
             if(self.getDistance (p) < 32 && self.parent !== p.id){
                 p.hp -= 1;
@@ -316,7 +316,7 @@ var Enemy = function(id){
 
                 self.toRemove = true;
             }
-        }//
+        }*/
 
         Enemy.list[id] = self;
 
@@ -446,4 +446,3 @@ setInterval(function(){
 
    
 },1000/25);
-

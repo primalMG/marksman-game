@@ -9,18 +9,22 @@
     <title>Marksmans game</title>
 </head>
 <body>
-    <div id="signIn">
+    <div id="signIn" class="container">
+        <div class="jumbotron" style="text-align: center;">
+            <h1>The Ubiquitous Marksman's Game</h1>
+            <h2>Enter your details to join the never ending game</h2></br>
         Username: <input id="username" type="text"></input>
         Password: <input id="password" type="password"></input>
         <button id="login">login</button>
         <button id="signUp">sign up</button>
+        </div>
     </div>
 
    
 
     
 
-    <div id="radio" >
+    <div id="radio" style="display:none;">
             <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
           
 
@@ -59,7 +63,7 @@
         socket.on('loginResponse',function(data){
 		    if(data.success){
                 signIn.style.display = 'none';
-                radio.style.display = 'inline-block';
+                radio.style.textAlign = 'center';
             } else 
                 alert("unsuccessful.");
         });
