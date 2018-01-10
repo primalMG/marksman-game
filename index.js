@@ -35,7 +35,7 @@ var Entity = function(parameter){
         if(parameter.x)
             self.x = parameter.x;
         if(parameter.y)
-            self.id = parameter.id;
+            self.y = parameter.y;
         if(parameter.id)
             self.id = parameter.id;    
     }
@@ -77,15 +77,20 @@ var Player = function(parameter){
 
         if (self.attacking) {
            self.shootRockets(Math.random()*0);
+           console.log
         }
     }
 
     //shooting the projectiles 
     self.shootRockets = function(angle){
-        var rockets = Bullet(angle);
-            rockets.x = self.x;
-            rockets.y = self.y;
+        Bullet({
+            parent:self.id,
+            angle:angle,
+            x:self.x,
+            y:self.y,
+        });
     }
+
     
     self.updateSpeed = function(){
         if(self.right)
@@ -206,11 +211,13 @@ Player.update = function(){
 }
 
 //Projectiles
-var Bullet = function(angle){
-    var self = Entity();
+var Bullet = function(parameter){
+    var self = Entity(parameter);
     self.id = Math.random();
-    self.spdX = Math.cos(angle/180*Math.PI) * 10;
-    self.spdY = Math.sin(angle/180*Math.PI) * 1;
+    parameter.angle = parameter.angle;
+    self.spdX = Math.cos(parameter.angle/180*Math.PI) * 10;
+    self.spdY = Math.sin(parameter.angle/180*Math.PI) * 10;
+    self.parent = parameter.parent;
 
     self.timer = 0;
     self.toRemove = false;
@@ -225,11 +232,12 @@ var Bullet = function(angle){
             var e =  Enemy.list[i];
             if(self.getDistance (e) < 32 && self.parent !== e.id){
                 e.eHp -= 1;
+
                 if(e.eHp <= 0){
                 var shooter = Player.list[self.parent];
                     if(shooter)
                         shooter.score += 1;
-                        e.hp = e.hpMax;
+                        e.to = e.hpMax;
                         e.x = Math.random() * 500;
                         e.y = Math.random() * 500;     
                     }    
@@ -280,8 +288,8 @@ Bullet.update = function(){
 }
 
 
-var Enemy = function(id){
-        var self = Entity();
+var Enemy = function(parameter){
+        var self = Entity(parameter);
         self.id = "" + Math.floor(50 * Math.random());  
         self.width = 10 + Math.random()*30;
         self.height = 10 + Math.random()*30;
@@ -290,6 +298,7 @@ var Enemy = function(id){
         self.maxSpeed = 10;
         self.eHp = 1;
         self.eHp = 1;
+
 
       
         self.timer = 0;
@@ -334,15 +343,14 @@ var Enemy = function(id){
             };
         }
 
-        /*for(var i in Player.list){
+        for(var i in Player.list){
             var p =  Player.list[i];
-            if(self.getDistance(p) < 32 && self.parent !== p.id){
+            if(self.getDistance (p) < 32 && self.parent !== p.id){
                 p.hp -= 1;
-            }    
-        }*/
-     
+            }
+        }
 
-        Enemy.list[id] = self;
+        Enemy.list[self.id] = self;
 
         initialisePack.enemy.push(self.getInitialisePack());
 
@@ -350,6 +358,11 @@ var Enemy = function(id){
 }
 
 Enemy.list = {};
+
+Enemey.Attack = function(){
+    
+}
+
 
 Enemy.Spawn = function(socket){
     var enemy = Enemy(socket.id);
@@ -361,6 +374,7 @@ Enemy.Spawn = function(socket){
         selfID:socket.id,
         enemy:enemies,
     })
+
 }
 
 Enemy.update = function(){
@@ -397,7 +411,7 @@ io.on('connection', function(socket){
 
     //allowing user to sign in
 	socket.on('join',function(data){ //{username,password}
-			if(passwordValidation){
+			if(passwordValidation(data)){
 				Player.onConnect(socket,data.username);
 				socket.emit('loginResponse',{success:true});
 			} else {

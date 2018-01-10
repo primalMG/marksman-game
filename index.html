@@ -126,6 +126,8 @@
                 var x = self.x - Player.list[selfID].x + width/2;
                 var y = self.y - Player.list[selfID].y + height/2;
 
+                
+
             }
 
             Player.list[self.id] = self;
@@ -175,7 +177,6 @@
         Enemy.list = {};
 
         var selfID = null;
-
 
        //iniitialising the player/bullets poistion on the client
        socket.on('initialise', function(data){
@@ -299,6 +300,7 @@
        var drawScore = function(){
            ctx.fillText(Player.list[selfID].score,30,30);
        }
+       var lastScore = null;
         
  
 
