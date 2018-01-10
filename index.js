@@ -23,7 +23,7 @@ var HEIGHT = 475;
 
 
 //Super class for the player and bullets -- updating positions
-var Entity = function(param){
+var Entity = function(parameter){
     var self = {
         x:250,
         y:250,
@@ -31,6 +31,15 @@ var Entity = function(param){
         spdY: 0,
         id: "",
     }
+    if(parameter){
+        if(parameter.x)
+            self.x = parameter.x;
+        if(parameter.y)
+            self.id = parameter.id;
+        if(parameter.id)
+            self.id = parameter.id;    
+    }
+
     self.update = function(){
         self.updatePosition();
     }
@@ -44,10 +53,9 @@ var Entity = function(param){
     return self;
 }
 
-var Player = function(id){
-    var self = Entity();
-    self.id = id;    
-    self.username = "";
+var Player = function(parameter){
+    var self = Entity(parameter); 
+        self.username = parameter.username;
         self.number = "" + Math.floor(10 * Math.random());
         self.right = false;
         self.left = false;
@@ -57,8 +65,8 @@ var Player = function(id){
         self.width = 10;
         self.height = 10;
         self.maxSpeed = 10;
-        self.hp = 5;
-        self.hpMax = 5;
+        self.hp = 1;
+        self.hpMax = 1;
         self.score = 0;
     
 
@@ -129,7 +137,7 @@ var Player = function(id){
     }
 
 
-    Player.list[id] = self;
+    Player.list[self.id] = self;
 
     initialisePack.player.push(self.getInitialisePack());
 
@@ -139,8 +147,11 @@ var Player = function(id){
 
 Player.list = {};
 
-Player.onConnect = function(socket){
-    var player = Player(socket.id);
+Player.onConnect = function(socket,username){
+    var player = Player({
+        username:username,
+        id:socket.id,
+    });
     socket.on('keyPress', function(data){
         if(data.inputId === 'left')
             player.left = data.state;
@@ -153,6 +164,14 @@ Player.onConnect = function(socket){
         else if(data.inputId === 'space')
             player.attacking = data.state;             
     });
+    
+    //sending a users message to the server.
+    socket.on('pushMessage', function(data){
+        for(var i in socketList){
+            socketList[i].emit('newMessage',player.username  + ': ' + data);
+            }
+    });    
+      
 
     var players = [];
     for (var i in Player.list)
@@ -161,7 +180,8 @@ Player.onConnect = function(socket){
     var bullets = [];
     for (var i in Bullet.list)
         bullets.push(Bullet.list[i].getInitialisePack()); 
-      
+
+        
 
     socket.emit('initialise',{
         selfID:socket.id,
@@ -200,15 +220,22 @@ var Bullet = function(angle){
             self.toRemove = false;
         superUpdate();
 
-    /*bullet collision
-        for(var i in Player.list){
-            var e =  enemies.list[i];
+    //bullet collision
+        for(var i in Enemy.list){
+            var e =  Enemy.list[i];
             if(self.getDistance (e) < 32 && self.parent !== e.id){
-                enemy.toRemove = true;
-
+                e.eHp -= 1;
+                if(e.eHp <= 0){
+                var shooter = Player.list[self.parent];
+                    if(shooter)
+                        shooter.score += 1;
+                        e.hp = e.hpMax;
+                        e.x = Math.random() * 500;
+                        e.y = Math.random() * 500;     
+                    }    
                 self.toRemove = true;
             }
-        }*/
+        }
 
     }
 
@@ -261,6 +288,9 @@ var Enemy = function(id){
         self.spdX = 5 + Math.random()*10;
         self.spdY = 5 + Math.random()*10;
         self.maxSpeed = 10;
+        self.eHp = 1;
+        self.eHp = 1;
+
       
         self.timer = 0;
 
@@ -291,6 +321,8 @@ var Enemy = function(id){
                 y:self.y,
                 spdX:self.spdX,
                 spdY:self.spdY,
+                eHp:self.hp,
+                maxHp:self.maxHp,
             };
         }
 
@@ -302,21 +334,13 @@ var Enemy = function(id){
             };
         }
 
-        //collision
-        /*for(var i in Enemy.list){
+        /*for(var i in Player.list){
             var p =  Player.list[i];
-            if(self.getDistance (p) < 32 && self.parent !== p.id){
+            if(self.getDistance(p) < 32 && self.parent !== p.id){
                 p.hp -= 1;
-                var shooter = Player.list[self.parent];
-                if(p.hp <= 0){
-                    p.hp = p.hpMax;
-                    p.y = Math.random * 500;
-                }
-                
-
-                self.toRemove = true;
-            }
+            }    
         }*/
+     
 
         Enemy.list[id] = self;
 
@@ -372,14 +396,15 @@ io.on('connection', function(socket){
     socketList[socket.id] = socket;
 
     //allowing user to sign in
-    socket.on('join',function(data){
-        if(passwordValidation(data)){
-            Player.onConnect(socket);
-            socket.emit('loginResponse',{success:true});
-        } else {
-            socket.emit('loginResponse',{success:false});
-        }
-    });
+	socket.on('join',function(data){ //{username,password}
+			if(passwordValidation){
+				Player.onConnect(socket,data.username);
+				socket.emit('loginResponse',{success:true});
+			} else {
+				socket.emit('loginResponse',{success:false});			
+			}
+
+	});
 
     //allowing user to sign up
     socket.on('create',function(data){
@@ -405,18 +430,13 @@ io.on('connection', function(socket){
 
 
 
-    //sending a users message to the server.
-    socket.on('pushMessage', function(data){
-        var userId = ("" + socket.id).slice(2,7);
-        for(var i in socketList){
-            socketList[i].emit('newMessage', userId + ': ' + data);
-        }
-    });
+
 
     socket.on('evalServer', function(data){
         var res = eval(data);
         socket.emit('evalAnswer',res);
     });
+
 });
 
 var initialisePack = {player:[],bullet:[],enemy:[]};

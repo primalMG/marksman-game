@@ -24,7 +24,7 @@
 
     
 
-    <div id="radio" style="display:none;">
+    <div id="radio" style="display: none;">
             <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
           
 
@@ -63,7 +63,7 @@
         socket.on('loginResponse',function(data){
 		    if(data.success){
                 signIn.style.display = 'none';
-                radio.style.textAlign = 'center';
+                radio.style.display = 'inline';
             } else 
                 alert("unsuccessful.");
         });
