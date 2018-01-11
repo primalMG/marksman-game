@@ -77,7 +77,6 @@ var Player = function(parameter){
 
         if (self.attacking) {
            self.shootRockets(Math.random()*0);
-           console.log
         }
     }
 
@@ -237,7 +236,7 @@ var Bullet = function(parameter){
                 var shooter = Player.list[self.parent];
                     if(shooter)
                         shooter.score += 1;
-                        e.to = e.hpMax;
+                        e.hp = e.hpMax;
                         e.x = Math.random() * 500;
                         e.y = Math.random() * 500;     
                     }    
@@ -343,12 +342,13 @@ var Enemy = function(parameter){
             };
         }
 
-        for(var i in Player.list){
+        /*for(var i in Player.list){
             var p =  Player.list[i];
             if(self.getDistance (p) < 32 && self.parent !== p.id){
                 p.hp -= 1;
+
             }
-        }
+        }*/
 
         Enemy.list[self.id] = self;
 
@@ -358,10 +358,6 @@ var Enemy = function(parameter){
 }
 
 Enemy.list = {};
-
-Enemey.Attack = function(){
-    
-}
 
 
 Enemy.Spawn = function(socket){
