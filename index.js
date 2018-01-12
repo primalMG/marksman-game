@@ -22,7 +22,7 @@ var HEIGHT = 475;
 
 
 
-//Super class for the player and bullets -- updating positions
+//Super class for the player, bullets and Enemies
 var Entity = function(parameter){
     var self = {
         x:250,
@@ -53,6 +53,7 @@ var Entity = function(parameter){
     return self;
 }
 
+//sub class containing variables for the player as well as the parameters which allow the player to shoot projectiles
 var Player = function(parameter){
     var self = Entity(parameter); 
         self.username = parameter.username;
@@ -147,10 +148,9 @@ var Player = function(parameter){
 
     return self;
 }
-
-
+//Storing the play's information within an array
 Player.list = {};
-
+//
 Player.onConnect = function(socket,username){
     var player = Player({
         username:username,
@@ -342,13 +342,22 @@ var Enemy = function(parameter){
             };
         }
 
-        /*for(var i in Player.list){
-            var p =  Player.list[i];
-            if(self.getDistance (p) < 32 && self.parent !== p.id){
-                p.hp -= 1;
+        //Enemy collison :(
+            for(var i in Player.list){
+                var p =  Player.list[i];
+                if(self.getDistance (p) < 32 && self.parent !== p.id){
+                    p.hp -= 1;
 
+                    if(p.hp <= 0){
+                        var holdL = Player.list[self.parent];
+                        if (holdL)
+                            holdL.score -= 1;
+                            p.hp = p.maxHp;
+                            p.x = Math.random() * 500;
+                            p.y = Math.random() * 500;
+                    }
+                }
             }
-        }*/
 
         Enemy.list[self.id] = self;
 
@@ -356,7 +365,6 @@ var Enemy = function(parameter){
 
         return self;
 }
-
 Enemy.list = {};
 
 
@@ -367,9 +375,10 @@ Enemy.Spawn = function(socket){
         enemies.push(Enemy.list[i].getInitialisePack()); 
 
     socket.emit('initialiseE',{
-        selfID:socket.id,
+        selfIdE:socket.id,
         enemy:enemies,
     })
+
 
 }
 
@@ -406,7 +415,7 @@ io.on('connection', function(socket){
     socketList[socket.id] = socket;
 
     //allowing user to sign in
-	socket.on('join',function(data){ //{username,password}
+	socket.on('join',function(data){ 
 			if(passwordValidation(data)){
 				Player.onConnect(socket,data.username);
 				socket.emit('loginResponse',{success:true});
@@ -426,7 +435,7 @@ io.on('connection', function(socket){
         }
     });
     
-    //creating a new player.
+    //creating a new player and putting them into the game
     Player.onConnect(socket);
 
     //spawning the emeies
@@ -437,10 +446,6 @@ io.on('connection', function(socket){
         delete socketList[socket.id];
         Player.onDisconnect(socket);
     });
-
-
-
-
 
     socket.on('evalServer', function(data){
         var res = eval(data);
